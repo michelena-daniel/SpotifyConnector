@@ -1,3 +1,5 @@
+using SpotiConnector.Infrastructure.Options;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -7,6 +9,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddControllers();
+
+builder.Services.Configure<SpotifyOptions>(builder.Configuration.GetSection("Spotify"));
 
 
 var app = builder.Build();
