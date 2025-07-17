@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Options;
+using SpotiConnector.Application.DTO;
 using SpotiConnector.Application.Interfaces;
-using SpotiConnector.Infrastructure.DTO;
-using SpotiConnector.Infrastructure.Options;
+using SpotiConnector.Application.Options;
 using System.Text.Json;
 
 namespace SpotiConnector.Infrastructure.Clients
@@ -17,18 +17,24 @@ namespace SpotiConnector.Infrastructure.Clients
             _options = options.Value;
         }
 
-        public async Task<string> GetTokenAsync()
+        public async Task<string> GetUserTokenByAuthorizationCode(string code, string redirectUri)
         {
             var body = new Dictionary<string, string>()
             {
-                { "grant_type", "client_credentials" },
-                { "client_id", _options.ClientId },
-                { "client_secret", _options.ClientSecret }
+                { "grant_type", "authorization_code" },
+                { "code", code },
+                { "redirect_uri", redirectUri }
             };
+
+            var credentials = $"{_options.ClientId}:{_options.ClientSecret}";
+            var encodedCredentials = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(credentials));
+
             var request = new HttpRequestMessage(HttpMethod.Post, "https://accounts.spotify.com/api/token")
             {
                 Content = new FormUrlEncodedContent(body)
             };
+
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", encodedCredentials);
 
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
@@ -36,7 +42,7 @@ namespace SpotiConnector.Infrastructure.Clients
             var json = await response.Content.ReadAsStringAsync();
             var tokenResponse = JsonSerializer.Deserialize<SpotifyTokenResponseDTO>(json);
 
-            return tokenResponse!.Access_token;
+            return tokenResponse!.AccessToken;
         }
     }
 }

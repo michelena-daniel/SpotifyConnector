@@ -1,4 +1,4 @@
-﻿namespace SpotiConnector.Infrastructure.Options
+﻿namespace SpotiConnector.Application.Options
 {
     public class SpotifyOptions
     {

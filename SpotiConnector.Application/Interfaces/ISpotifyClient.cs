@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SpotiConnector.Application.DTO;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,6 @@ namespace SpotiConnector.Application.Interfaces
 {
     public interface ISpotifyClient
     {
-        Task<string> GetTokenAsync();
+        Task<string> GetUserTokenByAuthorizationCode(string code, string redirectUri);
     }
 }

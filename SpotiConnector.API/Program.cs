@@ -1,4 +1,7 @@
-using SpotiConnector.Infrastructure.Options;
+using SpotiConnector.Application.Interfaces;
+using SpotiConnector.Application.Options;
+using SpotiConnector.Application.Services;
+using SpotiConnector.Infrastructure.Clients;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,17 +15,24 @@ builder.Services.AddControllers();
 
 builder.Services.Configure<SpotifyOptions>(builder.Configuration.GetSection("Spotify"));
 
+builder.Services.AddHttpClient<ISpotifyClient, SpotifyClient>(client =>
+{
+    client.BaseAddress = new Uri("https://accounts.spotify.com/");
+});
+builder.Services.AddTransient<ISpotifyAuthorizationService, SpotifyAuthorizationService>();
+
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    //app.MapOpenApi();
-    app.UseSwaggerUI();
+    //app.MapOpenApi();    
     app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
+app.MapControllers();
 
 app.Run();
