@@ -14,6 +14,10 @@ namespace SpotiConnector.API.Controllers
             _spotifyAuthorizationService = spotifyAuthorizationService;
         }
 
+        // <summary>
+        // Generates authorization url for user to grant acces to their spotify account
+        // </summary>
+        // <returns>Redirects the user to Spotify's authorization endpoint.</returns>
         [HttpGet("authorize")]
         public IActionResult AuthorizeUser()
         {
@@ -21,12 +25,15 @@ namespace SpotiConnector.API.Controllers
             return Redirect(url);
         }
 
+        // <summary>
+        // Catches spotify callback with user code which can be exchange for a token grating access for future calls (access level depends on scope sent on authorization)
+        // </summary>
+        // <returns>Returns spotify access token on successful user authorization</returns>
         [HttpGet("callback")]
         public async Task<IActionResult> SpotifyCallback([FromQuery] string code, [FromQuery] string state)
         {
             // TODO: Validate state (security check)
-            var redirectUri = "https://localhost:7001/api/auth/callback";
-            var tokens = await _spotifyAuthorizationService.ExchangeUserCodeForAccessToken(code, redirectUri);
+            var tokens = await _spotifyAuthorizationService.ExchangeUserCodeForAccessToken(code);
             // TODO: Store tokens
             return Ok(tokens);
         }

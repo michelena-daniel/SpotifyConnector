@@ -25,18 +25,18 @@ namespace SpotiConnector.Application.Services
 
         public string GenerateAuthorizationUri()
         {
-            var redirectUri = "https://localhost:7001/api/auth/callback";
+            var redirectUri = "https://127.0.0.1:7001/api/auth/callback";
             return $"https://accounts.spotify.com/authorize" +
                    $"?client_id={_options.ClientId}" +
                    $"&response_type=code" +
-                   $"&redirect_uri={redirectUri}" +
+                   $"&redirect_uri={_options.RedirectUri}" +
                    $"&scope={AuthorizationScopesEnum.UserReadCurrentlyPlaying.GetEnumMemberValue()}" +
                    $"&state={Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))}";
         }
 
-        public async Task<string> ExchangeUserCodeForAccessToken(string code, string redirectUri)
+        public async Task<string> ExchangeUserCodeForAccessToken(string code)
         {
-            var accessToken = await _client.GetUserTokenByAuthorizationCode(code, redirectUri);
+            var accessToken = await _client.GetUserTokenByAuthorizationCode(code, _options.RedirectUri);
 
             return accessToken;
         }
