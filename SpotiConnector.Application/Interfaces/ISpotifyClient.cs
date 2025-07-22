@@ -1,14 +1,11 @@
 ﻿using SpotiConnector.Application.DTO;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SpotiConnector.Application.Interfaces
 {
     public interface ISpotifyClient
     {
-        Task<string> GetUserTokenByAuthorizationCode(string code, string redirectUri);
+        Task<SpotifyTokenResponseDTO?> GetUserTokenByAuthorizationCode(string code, string redirectUri);
+        Task<CurrentUserProfileDTO?> GetCurrentUserProfileByAuthorizationCode(string accesToken);
+        Task<List<string>> GetUserTopTrackNamesAsync(string accessToken);
     }
 }

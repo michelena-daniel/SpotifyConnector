@@ -1,0 +1,24 @@
+services:
+  spoticonnector.api:
+    build:
+      context: ./SpotiConnector.API
+      dockerfile: Dockerfile
+    ports:
+      - "7001:8080" #HTTP
+      - "7002:443" #HTTPS local cert
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080;https://+:443      
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/spoticonnector.pfx
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=${CERT_PASSWORD}
+      - Redis__Host=redis
+      - Redis__Port=6379
+    volumes:
+      - ${USERPROFILE}\.aspnet\https:/https:ro
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"

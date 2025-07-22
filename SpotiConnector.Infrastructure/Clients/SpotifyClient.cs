@@ -2,6 +2,7 @@
 using SpotiConnector.Application.DTO;
 using SpotiConnector.Application.Interfaces;
 using SpotiConnector.Application.Options;
+using System.Net.Http.Headers;
 using System.Text.Json;
 
 namespace SpotiConnector.Infrastructure.Clients
@@ -17,7 +18,7 @@ namespace SpotiConnector.Infrastructure.Clients
             _options = options.Value;
         }
 
-        public async Task<string> GetUserTokenByAuthorizationCode(string code, string redirectUri)
+        public async Task<SpotifyTokenResponseDTO?> GetUserTokenByAuthorizationCode(string code, string redirectUri)
         {
             var body = new Dictionary<string, string>()
             {
@@ -42,7 +43,36 @@ namespace SpotiConnector.Infrastructure.Clients
             var json = await response.Content.ReadAsStringAsync();
             var tokenResponse = JsonSerializer.Deserialize<SpotifyTokenResponseDTO>(json);
 
-            return tokenResponse!.AccessToken;
+            return tokenResponse;
+        }
+
+        public async Task<List<string>> GetUserTopTrackNamesAsync(string accessToken)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, "https://api.spotify.com/v1/me/top/tracks");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var response = await _httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            var content = await response.Content.ReadAsStringAsync();
+            using var json = JsonDocument.Parse(content);
+            var tracks = json.RootElement.GetProperty("items");
+
+            return [.. tracks.EnumerateArray().Select(track => track.GetProperty("name").GetString() ?? "Unknown Track")];
+        }
+
+        public async Task<CurrentUserProfileDTO?> GetCurrentUserProfileByAuthorizationCode(string accessToken)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, "https://api.spotify.com/v1/me");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var response = await _httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            var content = await response.Content.ReadAsStringAsync();
+            var userResponse = JsonSerializer.Deserialize<CurrentUserProfileDTO?>(content);
+
+            return userResponse;
         }
     }
 }

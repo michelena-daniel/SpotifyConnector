@@ -1,8 +1,10 @@
-﻿namespace SpotiConnector.Application.Interfaces
+﻿using SpotiConnector.Application.DTO;
+
+namespace SpotiConnector.Application.Interfaces
 {
     public interface ISpotifyAuthorizationService
     {
         string GenerateAuthorizationUri();
-        Task<string> ExchangeUserCodeForAccessToken(string code);
+        Task<SpotifyTokenResponseDTO> HandleSpotifyCallback(string code);
     }
 }

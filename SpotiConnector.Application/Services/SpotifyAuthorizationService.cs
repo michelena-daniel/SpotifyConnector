@@ -4,41 +4,60 @@ using SpotiConnector.Application.Enums;
 using SpotiConnector.Application.Extensions;
 using SpotiConnector.Application.Interfaces;
 using SpotiConnector.Application.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SpotiConnector.Application.Services
 {
     public class SpotifyAuthorizationService : ISpotifyAuthorizationService
     {
-        private SpotifyOptions _options;
-        private ISpotifyClient _client;
-        public SpotifyAuthorizationService(IOptions<SpotifyOptions> options, ISpotifyClient client) 
+        private readonly SpotifyOptions _options;
+        private readonly ISpotifyClient _client;
+        private ISpotifyTokenCache _tokenCache;
+
+        public SpotifyAuthorizationService(IOptions<SpotifyOptions> options, ISpotifyClient client, ISpotifyTokenCache tokenCache) 
         {
             _options = options.Value;
             _client = client;
+            _tokenCache = tokenCache;
         }
 
         public string GenerateAuthorizationUri()
         {
-            var redirectUri = "https://127.0.0.1:7001/api/auth/callback";
             return $"https://accounts.spotify.com/authorize" +
                    $"?client_id={_options.ClientId}" +
                    $"&response_type=code" +
                    $"&redirect_uri={_options.RedirectUri}" +
-                   $"&scope={AuthorizationScopesEnum.UserReadCurrentlyPlaying.GetEnumMemberValue()}" +
+                   $"&scope={AuthorizationScopesEnum.UserReadCurrentlyPlaying.GetEnumMemberValue()+
+                   " "+AuthorizationScopesEnum.UserTopRead.GetEnumMemberValue()}" +
                    $"&state={Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))}";
         }
 
-        public async Task<string> ExchangeUserCodeForAccessToken(string code)
+        public async Task<SpotifyTokenResponseDTO> HandleSpotifyCallback(string code)
         {
-            var accessToken = await _client.GetUserTokenByAuthorizationCode(code, _options.RedirectUri);
+            // HANDLE CALLBACK
+            var tokenResponse = await ExchangeUserCodeForAccessToken(code);
+            var currentUser = await GetCurrentUserProfile(tokenResponse.AccessToken);
 
-            return accessToken;
+            // HANDLE CACHE
+            await _tokenCache.StoreAsync(currentUser.Id, tokenResponse);
+
+            // RETURN DATA TO CONTROLLER
+            return tokenResponse;
+
+        }
+
+        private async Task<SpotifyTokenResponseDTO?> ExchangeUserCodeForAccessToken(string code)
+        {
+            var accessTokenResponse = await _client.GetUserTokenByAuthorizationCode(code, _options.RedirectUri);
+
+            return accessTokenResponse;
+        }
+
+        private async Task<CurrentUserProfileDTO?> GetCurrentUserProfile(string accessToken)
+        {
+            var currentUserProfile = await _client.GetCurrentUserProfileByAuthorizationCode(accessToken);
+
+            return currentUserProfile;
         }
     }
 }

@@ -1,7 +1,9 @@
 using SpotiConnector.Application.Interfaces;
 using SpotiConnector.Application.Options;
 using SpotiConnector.Application.Services;
+using SpotiConnector.Infrastructure.Cache;
 using SpotiConnector.Infrastructure.Clients;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,7 +22,20 @@ builder.Services.AddHttpClient<ISpotifyClient, SpotifyClient>(client =>
     client.BaseAddress = new Uri("https://accounts.spotify.com/");
 });
 builder.Services.AddTransient<ISpotifyAuthorizationService, SpotifyAuthorizationService>();
+builder.Services.AddScoped<ISpotifyTokenCache, SpotifyTokenCacheService>();
 
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    options.InstanceName = "spotifyConnector";
+});
+
+// Multiplexer functionality might not be needed yet, rolling iwth DistributedCache config for now
+//builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+//{
+//    var configuration = builder.Configuration.GetConnectionString("Redis");
+//    return ConnectionMultiplexer.Connect(configuration!);
+//});
 
 var app = builder.Build();
 
@@ -32,7 +47,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+if (app.Environment.IsProduction())
+{
+    app.UseHttpsRedirection();
+}
+
 app.MapControllers();
 
 app.Run();

@@ -9,6 +9,8 @@ namespace SpotiConnector.Application.Enums
         [EnumMember(Value = "user-modify-playback-state")]
         UserModifyPlaybackState,
         [EnumMember(Value = "user-read-currently-playing")]
-        UserReadCurrentlyPlaying
+        UserReadCurrentlyPlaying,
+        [EnumMember(Value = "user-top-read")]
+        UserTopRead
     }
 }
