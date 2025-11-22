@@ -26,7 +26,7 @@ namespace SpotiConnector.API.Controllers
         }
 
         // <summary>
-        // Catches spotify callback with user code which can be exchange for a token grating access for future calls (access level depends on scope sent on authorization)
+        // Catches spotify callback with user code which can be exchanged for a token grating access for future calls (access level depends on scope sent on authorization)
         // </summary>
         // <returns>Returns spotify access token on successful user authorization</returns>
         [HttpGet("callback")]
