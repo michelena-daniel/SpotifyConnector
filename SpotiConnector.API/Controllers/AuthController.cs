@@ -21,8 +21,15 @@ namespace SpotiConnector.API.Controllers
         [HttpGet("authorize")]
         public IActionResult AuthorizeUser()
         {
-            var url = _spotifyAuthorizationService.GenerateAuthorizationUri();
-            return Redirect(url);
+            try
+            {
+                var url = _spotifyAuthorizationService.GenerateAuthorizationUri();
+                return Redirect(url);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }            
         }
 
         // <summary>
@@ -30,14 +37,20 @@ namespace SpotiConnector.API.Controllers
         // </summary>
         // <returns>Returns spotify access token on successful user authorization</returns>
         [HttpGet("callback")]
-        public async Task<IActionResult> SpotifyCallback([FromQuery] string code, [FromQuery] string state)
+        public async Task<IActionResult> SpotifyCallback([FromQuery] string code)
         {
-            // TODO: Validate state (security check)
-            AuthResultDTO? result = await _spotifyAuthorizationService.HandleSpotifyCallback(code);
-            if (result != null)
-                return BadRequest("Invalid code");
-            // TODO: Store tokens
-            return Ok(result);
+            try
+            {
+                AuthResultDTO? result = await _spotifyAuthorizationService.HandleSpotifyCallback(code);
+                if (result == null)
+                    return BadRequest("Invalid code");
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+            
         }
     }
 }

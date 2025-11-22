@@ -38,50 +38,52 @@ namespace SpotiConnector.Application.Services
                    $"&state={Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))}";
         }
 
-        public async Task<SpotifyTokenResponseDTO?> HandleSpotifyCallback(string code)
+        public async Task<AuthResultDTO?> HandleSpotifyCallback(string code)
         {
-            // retrieve token and user
-            var tokenResponse = await ExchangeUserCodeForAccessToken(code);
-            if(tokenResponse == null)
-                return null;
-            var currentUser = await GetCurrentUserProfile(tokenResponse.AccessToken);
-            if(currentUser == null)
-                return null;
-            // handle cache
+            SpotifyTokenResponseDTO? tokenResponse = await ExchangeUserCodeForAccessToken(code) 
+                ?? throw new ApplicationException("Failed to exchange authorization code for token.");
+            CurrentUserProfileDTO? currentUser = await GetCurrentUserProfile(tokenResponse.AccessToken) 
+                ?? throw new ApplicationException("Failed to retrieve Spotify user profile.");
             await _tokenCache.StoreAsync(currentUser.Id, tokenResponse);
+            string jwtToken = BuildJwt(currentUser.Id);
 
-            //  build JWT
-            var claims = new[]
+            return new AuthResultDTO
             {
-                new Claim("spotify_id", currentUser.Id),
-                new Claim(JwtRegisteredClaimNames.Sub, currentUser.Id),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                JwtToken = jwtToken,
+                SpotifyToken = tokenResponse
             };
+        }
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey));
-
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var jwt = new JwtSecurityToken(
+        private string BuildJwt(string spotifyUserId)
+        {
+            Claim[] claims =
+            [
+                new Claim("spotify_id", spotifyUserId),
+                new Claim(JwtRegisteredClaimNames.Sub, spotifyUserId),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            ];
+            SymmetricSecurityKey? key = new(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey));
+            SigningCredentials? creds = new(key, SecurityAlgorithms.HmacSha256);
+            JwtSecurityToken jwt = new(
                 issuer: _jwtOptions.Issuer,
                 audience: _jwtOptions.Audience,
                 claims: claims,
                 expires: DateTime.UtcNow.AddMinutes(_jwtOptions.ExpMinutes),
                 signingCredentials: creds);
-
-            return tokenResponse;
+            JwtSecurityTokenHandler jwtHandler = new();
+            return jwtHandler.WriteToken(jwt);
         }
 
         private async Task<SpotifyTokenResponseDTO?> ExchangeUserCodeForAccessToken(string code)
         {
-            var accessTokenResponse = await _client.GetUserTokenByAuthorizationCode(code, _options.RedirectUri);
+            SpotifyTokenResponseDTO? accessTokenResponse = await _client.GetUserTokenByAuthorizationCode(code, _options.RedirectUri);
 
             return accessTokenResponse;
         }
 
         private async Task<CurrentUserProfileDTO?> GetCurrentUserProfile(string accessToken)
         {
-            var currentUserProfile = await _client.GetCurrentUserProfileByAuthorizationCode(accessToken);
+            CurrentUserProfileDTO? currentUserProfile = await _client.GetCurrentUserProfileByAuthorizationCode(accessToken);
 
             return currentUserProfile;
         }
