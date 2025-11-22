@@ -8,21 +8,14 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-//builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
 builder.Services.AddControllers();
-
 builder.Services.Configure<SpotifyOptions>(builder.Configuration.GetSection("Spotify"));
-
 builder.Services.AddHttpClient<ISpotifyClient, SpotifyClient>(client =>
 {
     client.BaseAddress = new Uri("https://accounts.spotify.com/");
 });
-
 builder.Services.Configure<JwtOptions>(
     builder.Configuration.GetSection("Jwt"));
 builder.Services.AddAuthentication()
@@ -43,15 +36,12 @@ builder.Services.AddAuthentication()
 
         };
     });
-
 builder.Services.AddAuthorization();
-
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = builder.Configuration.GetConnectionString("Redis");
     options.InstanceName = "spotifyConnector";
 });
-
 builder.Services.AddTransient<ISpotifyAuthorizationService, SpotifyAuthorizationService>();
 builder.Services.AddScoped<ISpotifyTokenCache, SpotifyTokenCacheService>();
 
@@ -59,8 +49,7 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
-{
-    //app.MapOpenApi();    
+{   
     app.UseSwagger();
     app.UseSwaggerUI();
 }
@@ -72,7 +61,7 @@ if (app.Environment.IsProduction())
 
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseExceptionHandler("/error");
 app.MapControllers();
 
 app.Run();

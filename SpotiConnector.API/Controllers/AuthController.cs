@@ -21,15 +21,8 @@ namespace SpotiConnector.API.Controllers
         [HttpGet("authorize")]
         public IActionResult AuthorizeUser()
         {
-            try
-            {
-                var url = _spotifyAuthorizationService.GenerateAuthorizationUri();
-                return Redirect(url);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }            
+            var url = _spotifyAuthorizationService.GenerateAuthorizationUri();
+            return Redirect(url);          
         }
 
         // <summary>
@@ -39,17 +32,10 @@ namespace SpotiConnector.API.Controllers
         [HttpGet("callback")]
         public async Task<IActionResult> SpotifyCallback([FromQuery] string code)
         {
-            try
-            {
-                AuthResultDTO? result = await _spotifyAuthorizationService.HandleSpotifyCallback(code);
-                if (result == null)
-                    return BadRequest("Invalid code");
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
+            AuthResultDTO? result = await _spotifyAuthorizationService.HandleSpotifyCallback(code);
+            if (result == null)
+                return BadRequest("Invalid code");
+            return Ok(result);
             
         }
     }
