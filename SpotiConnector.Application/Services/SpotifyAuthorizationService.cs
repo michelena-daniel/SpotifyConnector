@@ -38,7 +38,7 @@ namespace SpotiConnector.Application.Services
                    $"&state={Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))}";
         }
 
-        public async Task<AuthResultDTO?> HandleSpotifyCallback(string code)
+        public async Task<AuthResultDTO> HandleSpotifyCallback(string code)
         {
             SpotifyTokenResponseDTO? tokenResponse = await ExchangeUserCodeForAccessToken(code) 
                 ?? throw new ApplicationException("Failed to exchange authorization code for token.");

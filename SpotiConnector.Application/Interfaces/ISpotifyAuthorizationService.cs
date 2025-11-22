@@ -5,6 +5,6 @@ namespace SpotiConnector.Application.Interfaces
     public interface ISpotifyAuthorizationService
     {
         string GenerateAuthorizationUri();
-        Task<AuthResultDTO?> HandleSpotifyCallback(string code);
+        Task<AuthResultDTO> HandleSpotifyCallback(string code);
     }
 }

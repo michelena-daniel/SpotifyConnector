@@ -32,11 +32,8 @@ namespace SpotiConnector.API.Controllers
         [HttpGet("callback")]
         public async Task<IActionResult> SpotifyCallback([FromQuery] string code)
         {
-            AuthResultDTO? result = await _spotifyAuthorizationService.HandleSpotifyCallback(code);
-            if (result == null)
-                return BadRequest("Invalid code");
-            return Ok(result);
-            
+            AuthResultDTO result = await _spotifyAuthorizationService.HandleSpotifyCallback(code);
+            return Ok(result);            
         }
     }
 }
