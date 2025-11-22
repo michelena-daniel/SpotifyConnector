@@ -1,9 +1,10 @@
+using Microsoft.IdentityModel.Tokens;
 using SpotiConnector.Application.Interfaces;
 using SpotiConnector.Application.Options;
 using SpotiConnector.Application.Services;
 using SpotiConnector.Infrastructure.Cache;
 using SpotiConnector.Infrastructure.Clients;
-using StackExchange.Redis;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,8 +22,29 @@ builder.Services.AddHttpClient<ISpotifyClient, SpotifyClient>(client =>
 {
     client.BaseAddress = new Uri("https://accounts.spotify.com/");
 });
-builder.Services.AddTransient<ISpotifyAuthorizationService, SpotifyAuthorizationService>();
-builder.Services.AddScoped<ISpotifyTokenCache, SpotifyTokenCacheService>();
+
+builder.Services.Configure<JwtOptions>(
+    builder.Configuration.GetSection("Jwt"));
+builder.Services.AddAuthentication()
+    .AddJwtBearer(options =>
+    {
+        var jwt = builder.Configuration.GetSection("Jwt").Get<JwtOptions>();
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwt!.Issuer,
+            ValidAudience = jwt.Audience,
+            IssuerSigningKey
+                = new SymmetricSecurityKey(
+                      Encoding.UTF8.GetBytes(jwt.SigningKey))
+
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddStackExchangeRedisCache(options =>
 {
@@ -30,12 +52,8 @@ builder.Services.AddStackExchangeRedisCache(options =>
     options.InstanceName = "spotifyConnector";
 });
 
-// Multiplexer functionality might not be needed yet, rolling iwth DistributedCache config for now
-//builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
-//{
-//    var configuration = builder.Configuration.GetConnectionString("Redis");
-//    return ConnectionMultiplexer.Connect(configuration!);
-//});
+builder.Services.AddTransient<ISpotifyAuthorizationService, SpotifyAuthorizationService>();
+builder.Services.AddScoped<ISpotifyTokenCache, SpotifyTokenCacheService>();
 
 var app = builder.Build();
 
@@ -51,6 +69,9 @@ if (app.Environment.IsProduction())
 {
     app.UseHttpsRedirection();
 }
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
