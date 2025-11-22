@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using SpotiConnector.Application.DTO;
 using SpotiConnector.Application.Interfaces;
 
 namespace SpotiConnector.API.Controllers
@@ -32,9 +33,11 @@ namespace SpotiConnector.API.Controllers
         public async Task<IActionResult> SpotifyCallback([FromQuery] string code, [FromQuery] string state)
         {
             // TODO: Validate state (security check)
-            var accessToken = await _spotifyAuthorizationService.HandleSpotifyCallback(code);
+            AuthResultDTO? result = await _spotifyAuthorizationService.HandleSpotifyCallback(code);
+            if (result != null)
+                return BadRequest("Invalid code");
             // TODO: Store tokens
-            return Ok(accessToken);
+            return Ok(result);
         }
     }
 }

@@ -17,7 +17,7 @@ namespace SpotiConnector.Application.Services
         private readonly SpotifyOptions _options;
         private readonly JwtOptions _jwtOptions;
         private readonly ISpotifyClient _client;
-        private ISpotifyTokenCache _tokenCache;
+        private readonly ISpotifyTokenCache _tokenCache;
 
         public SpotifyAuthorizationService(IOptions<SpotifyOptions> options, ISpotifyClient client, ISpotifyTokenCache tokenCache, IOptions<JwtOptions> jwtOptions) 
         {
@@ -38,16 +38,15 @@ namespace SpotiConnector.Application.Services
                    $"&state={Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))}";
         }
 
-        public async Task<SpotifyTokenResponseDTO> HandleSpotifyCallback(string code)
+        public async Task<SpotifyTokenResponseDTO?> HandleSpotifyCallback(string code)
         {
             // retrieve token and user
             var tokenResponse = await ExchangeUserCodeForAccessToken(code);
             if(tokenResponse == null)
-            {
                 return null;
-            }
             var currentUser = await GetCurrentUserProfile(tokenResponse.AccessToken);
-
+            if(currentUser == null)
+                return null;
             // handle cache
             await _tokenCache.StoreAsync(currentUser.Id, tokenResponse);
 
