@@ -20,4 +20,17 @@
 ```
 {"access_token":"yourLongAccesToken","token_type":"Bearer","scope":"user-read-currently-playing user-top-read","expires_in":3600,"refresh_token":"yourLongRefreshToken"}
 ```
+
+So, the full OAuth flow is:
+
+**1**. Redirect to Spotify → ✔
+
+**2**. User logs in → ✔
+
+**3**. Spotify redirects back with code → ✔
+
+**4**. API exchanges code for tokens → ✔
+
+**5**. API outputs token JSON → ✔
+
 - Tokens will be cached in redis.
