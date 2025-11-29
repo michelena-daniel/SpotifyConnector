@@ -15,6 +15,7 @@ namespace SpotiConnector.API.Controllers
             _env = env;
         }
 
+        [HttpGet]
         [Route("/error")]
         public IActionResult HandleError()
         {
