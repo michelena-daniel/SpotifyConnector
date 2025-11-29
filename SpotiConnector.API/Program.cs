@@ -53,15 +53,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseExceptionHandler("/error");
 if (app.Environment.IsProduction())
 {
     app.UseHttpsRedirection();
 }
-
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseExceptionHandler("/error");
 app.MapControllers();
 
 app.Run();
